@@ -17,7 +17,7 @@ class MainWindow(QMainWindow):
         self.label.setGeometry(int(self.width()/2),int(self.height()/2),100,100)
         self.label.adjustSize()
 
-        self.filemenu = self.menuBar().addMenu("File")
+        self.filemenu = self.menuBar().addMenu('File')
         self.filemenu.open = self.filemenu.addAction('Open project..')
         self.filemenu.new = self.filemenu.addAction('New project..')
 
@@ -31,6 +31,5 @@ if __name__ == "__main__":
     import sys
     app = QApplication(sys.argv)
     win = MainWindow()
-    win.initUI()
     win.show()
     sys.exit(app.exec_())
