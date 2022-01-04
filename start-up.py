@@ -19,7 +19,7 @@ class MainWindow(QMainWindow):
         self.label.setFont(QtGui.QFont('Times', 20,20,True))
 
         self.filemenu = self.menuBar().addMenu('File')
-        self.filemenu.open = self.filemenu.addAction('Open project..').triggered.connect(lambda: self.openFileNamesDialog("Open project..","","All Files (*);;Zip Files (*.zip)"))
+        self.filemenu.open = self.filemenu.addAction('Open project..').triggered.connect(lambda: openFileNamesDialog(self,"Open project..","","All Files (*);;Zip Files (*.zip)"))
         self.filemenu.new = self.filemenu.addAction('New project..').triggered.connect(lambda: newProjectWindow())
         
         self.exit = QtWidgets.QAction('Exit mod maker')
@@ -30,27 +30,6 @@ class MainWindow(QMainWindow):
     def resizeEvent(self,_):
         self.label.adjustSize()
         self.label.move(int(self.width()/2-self.label.width()/2),int(self.height()/2-self.label.height()/2))
-    
-    def openFileNameDialog(self,name:str,boxtext:str = "",fileTypes:str = "All Files (*);;"):
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        fileName, filetype = QFileDialog.getOpenFileName(self,name, boxtext,fileTypes, options=options)
-        if fileName:
-            return fileName, filetype
-
-    def openFileNamesDialog(self,name:str,boxtext:str = "",fileTypes:str = "All Files (*);;"):
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        files, filetype = QFileDialog.getOpenFileNames(self,name,boxtext,fileTypes, options=options)
-        if files:
-            return files, filetype
-    
-    def saveFileDialog(self,name:str,boxtext:str = "",fileTypes:str = "All Files (*);;"):
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        fileName, filetype = QFileDialog.getSaveFileName(self,name,boxtext,fileTypes, options=options)
-        if fileName:
-            return fileName, filetype
         
     def closeEvent(self, event):
         close = QtWidgets.QMessageBox()
@@ -91,8 +70,29 @@ class newProjectWindow(QMainWindow):
         self.submit.setText("Submit")
         self.submit.clicked.connect(lambda: (print(self.projectLocation.textbox.text()), self.close()))
 
+def openFileNameDialog(self,name:str,boxtext:str = "",fileTypes:str = "All Files (*);;"):
+    options = QFileDialog.Options()
+    options |= QFileDialog.DontUseNativeDialog
+    fileName, filetype = QFileDialog.getOpenFileName(self,name, boxtext,fileTypes, options=options)
+    if fileName:
+        return fileName, filetype
+
+def openFileNamesDialog(self,name:str,boxtext:str = "",fileTypes:str = "All Files (*);;"):
+    options = QFileDialog.Options()
+    options |= QFileDialog.DontUseNativeDialog
+    files, filetype = QFileDialog.getOpenFileNames(self,name,boxtext,fileTypes, options=options)
+    if files:
+        return files, filetype
+    
+def saveFileDialog(self,name:str,boxtext:str = "",fileTypes:str = "All Files (*);;"):
+    options = QFileDialog.Options()
+    options |= QFileDialog.DontUseNativeDialog
+    fileName, filetype = QFileDialog.getSaveFileName(self,name,boxtext,fileTypes, options=options)
+    if fileName:
+        return fileName, filetype
+
 if __name__ == "__main__":
     import sys
     app = QApplication(sys.argv)
-    MainWindow()
+    win = MainWindow()
     sys.exit(app.exec_())
