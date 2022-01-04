@@ -9,6 +9,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("RW modmaker!")
         self.setCentralWidget(QtWidgets.QWidget())
         self.initUI()
+        self.show()
     
     def initUI(self):
         self.label = QtWidgets.QLabel(self)
@@ -18,56 +19,80 @@ class MainWindow(QMainWindow):
         self.label.setFont(QtGui.QFont('Times', 20,20,True))
 
         self.filemenu = self.menuBar().addMenu('File')
-        self.filemenu.open = self.filemenu.addAction('Open project..').triggered.connect(lambda: self.openFileNameDialog("Open project..","","All Files (*);;Zip Files (*.zip)"))
-        self.filemenu.new = self.filemenu.addAction('New project..').triggered.connect(lambda: self.newProject())
+        self.filemenu.open = self.filemenu.addAction('Open project..').triggered.connect(lambda: self.openFileNamesDialog("Open project..","","All Files (*);;Zip Files (*.zip)"))
+        self.filemenu.new = self.filemenu.addAction('New project..').triggered.connect(lambda: newProjectWindow())
         
         self.exit = QtWidgets.QAction('Exit mod maker')
         self.exit.setShortcut("Ctrl+Q")
-        self.exit.triggered.connect(lambda: QApplication.quit())
+        self.exit.triggered.connect(lambda: self.close())
         self.filemenu.addAction(self.exit)
     
     def resizeEvent(self,_):
         self.label.adjustSize()
         self.label.move(int(self.width()/2-self.label.width()/2),int(self.height()/2-self.label.height()/2))
     
-    def openFileNameDialog(self,name,boxtext,fileTypes):
-        if not(boxtext):
-            boxtext = ""
+    def openFileNameDialog(self,name:str,boxtext:str = "",fileTypes:str = "All Files (*);;"):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self,name, boxtext,fileTypes, options=options)
+        fileName, filetype = QFileDialog.getOpenFileName(self,name, boxtext,fileTypes, options=options)
         if fileName:
-            print(fileName)
+            return fileName, filetype
 
-    def openFileNamesDialog(self,name,boxtext,fileTypes):
-        if not(boxtext):
-            boxtext = ""
+    def openFileNamesDialog(self,name:str,boxtext:str = "",fileTypes:str = "All Files (*);;"):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        files, _ = QFileDialog.getOpenFileNames(self,name,boxtext,fileTypes, options=options)
+        files, filetype = QFileDialog.getOpenFileNames(self,name,boxtext,fileTypes, options=options)
         if files:
-            print(files)
+            return files, filetype
     
-    def saveFileDialog(self,name,boxtext,fileTypes):
-        if not(boxtext):
-            boxtext = ""
+    def saveFileDialog(self,name:str,boxtext:str = "",fileTypes:str = "All Files (*);;"):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getSaveFileName(self,name,boxtext,fileTypes, options=options)
+        fileName, filetype = QFileDialog.getSaveFileName(self,name,boxtext,fileTypes, options=options)
         if fileName:
-            print(fileName)
+            return fileName, filetype
+        
+    def closeEvent(self, event):
+        close = QtWidgets.QMessageBox()
+        close.setWindowTitle("Exiting...")
+        close.setText("You sure?")
+        close.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.Cancel)
+        close = close.exec()
+        if close == QtWidgets.QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()
 
-    def newProject(self):
-        self.newProjectWindow = QMainWindow()
-        self.newProjectWindow.setWindowTitle("New Project...")
-        self.newProjectWindow.label = QtWidgets.QLabel(self.newProjectWindow)
-        self.newProjectWindow.label.setText("Enter project name")
-        self.newProjectWindow.label.textbox = QtWidgets.QMessageBox(self.newProjectWindow)
-        self.newProjectWindow.show()
+class newProjectWindow(QMainWindow):
+    def __init__(self):
+        super(newProjectWindow,self).__init__()
+        self.setWindowTitle("New Project...")
+        self.setMinimumSize(400,400)
+        self.setCentralWidget(QtWidgets.QWidget())
+        self.initUI()
+        self.show()
+    
+    def initUI(self):
+        
+        self.projectName = QtWidgets.QLabel(self)
+        self.projectName.setText("Enter project name:")
+        self.projectName.textbox = QtWidgets.QLineEdit(self)
+        self.projectName.textbox.resize(150,20)
+        self.projectName.textbox.move(self.projectName.pos().x() + 150,self.projectName.pos().y() + 5)
+        self.projectLocation = QtWidgets.QLabel(self)
+        self.projectLocation.setText("Select project location(optinal):")
+        self.projectLocation.adjustSize()
+        self.projectLocation.move(self.projectName.pos().x(),self.projectName.pos().y() + 40)
+        self.projectLocation.textbox = QtWidgets.QLineEdit(self)
+        self.projectLocation.textbox.resize(150,20)
+        self.projectLocation.textbox.move(self.projectLocation.pos().x() + self.projectLocation.width() + 20,self.projectLocation.pos().y())
+        self.submit = QtWidgets.QPushButton(self)
+        self.submit.move(300,200)
+        self.submit.setText("Submit")
+        self.submit.clicked.connect(lambda: (print(self.projectLocation.textbox.text()), self.close()))
 
 if __name__ == "__main__":
     import sys
     app = QApplication(sys.argv)
-    win = MainWindow()
-    win.show()
+    MainWindow()
     sys.exit(app.exec_())
