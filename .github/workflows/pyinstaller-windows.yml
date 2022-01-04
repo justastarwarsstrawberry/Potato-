@@ -1,0 +1,21 @@
+name: Package exe with PyInstaller - Windows
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: PyInstaller Windows
+      uses: JackMcKew/pyinstaller-action-windows@main
+      with:
+        path: start-up.py
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: RWModMaker
+        path: src/dist/windows
