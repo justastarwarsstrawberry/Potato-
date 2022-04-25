@@ -1,98 +1,86 @@
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow
-import sys
+#!/usr/bin/env python
+import wx, wx.adv
 
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super(MainWindow,self).__init__()
-        self.resize(800, 600)
-        self.setWindowTitle("RW modmaker!")
-        self.setCentralWidget(QtWidgets.QWidget())
-        self.initUI()
-        self.show()
-    
-    def initUI(self):
-        self.label = QtWidgets.QLabel(self)
-        self.label.setObjectName("label")
-        self.label.setText("Welcome to the mod maker for RW!")
-        self.label.setGeometry(int(self.width()/2),int(self.height()/2),100,100)
-        self.label.setFont(QtGui.QFont('Times', 20,20,True))
+class mainWindow(wx.Frame):
 
-        self.filemenu = self.menuBar().addMenu('File')
-        self.filemenu.open = self.filemenu.addAction('Open project..').triggered.connect(lambda: openFileNamesDialog(self,"Open project..","","All Files (*);;Zip Files (*.zip)"))
-        self.filemenu.new = self.filemenu.addAction('New project..').triggered.connect(lambda: newProjectWindow())
+    def __init__(self, *args, **kw):
+        super(mainWindow, self).__init__(*args, **kw)
+        self.SetTitle("RW modmaker!")
+        self.SetName("MainWindow")
+        self.SetSize(800, 600)
+        self.Centre()
         
-        self.exit = QtWidgets.QAction('Exit mod maker')
-        self.exit.setShortcut("Ctrl+Q")
-        self.exit.triggered.connect(lambda: self.close())
-        self.filemenu.addAction(self.exit)
-    
-    def resizeEvent(self,_):
-        self.label.adjustSize()
-        self.label.move(int(self.width()/2-self.label.width()/2),int(self.height()/2-self.label.height()/2))
+        self.LoadToolbar()
+        self.Show()
         
-    def closeEvent(self, event):
-        close = QtWidgets.QMessageBox()
-        close.setWindowTitle("Exiting...")
-        close.setText("You sure?")
-        close.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.Cancel)
-        close = close.exec()
-        if close == QtWidgets.QMessageBox.Yes:
-            event.accept()
-        else:
-            event.ignore()
+        self.LoadUi()
 
-class newProjectWindow(QMainWindow):
-    def __init__(self):
-        super(newProjectWindow,self).__init__()
-        self.setWindowTitle("New Project...")
-        self.setMinimumSize(400,400)
-        self.setCentralWidget(QtWidgets.QWidget())
-        self.initUI()
-        self.show()
+    def LoadToolbar(self):
+        self.menubar = wx.MenuBar()
+        self.menus = {
+            'project': wx.Menu(),
+            'about': wx.Menu(),
+            'func': {}
+        }
+        def newMenu(name: str='', size:wx.Size = wx.Size(120,60)):
+            menu = wx.Dialog(self, -1, name, wx.DefaultPosition, wx.Size(400,400), 0, name)
+            menu.pnl = wx.Panel(menu)
+            menu.pnl.SetSize(menu.Size)
+            # menu.box = wx.BoxSizer(wx.HORIZONTAL)
+            # menu.box.Add(wx.StaticText(menu, -1, "New Project...", wx.DefaultPosition, wx.Size(size.x, size.y)), 0, 0, 0)
+            # menu.box.Add(wx.Button(menu.box, wx.ID_OK, 'Submit'))
+            menu.submit = wx.Button(menu.pnl, wx.ID_OK, 'submit', wx.Point(0,0), wx.Size(80, 20))
+
+            if menu.ShowWindowModal() == wx.ID_OK:
+                del menu
+            else:
+                del menu
+        def openFileMenu(name: str=''):
+            with wx.FileDialog(self, name, wildcard="README.*",
+                        style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
+
+                if fileDialog.ShowModal() == wx.ID_CANCEL:
+                    return     # the user changed their mind
+
+                # Proceed loading the file chosen by the user
+                pathname = fileDialog.GetPath()
+                try:
+                    with open(pathname, 'r') as file:
+                        self.doLoadDataOrWhatever(file)
+                except IOError:
+                    wx.LogError("Cannot open file '%s'.")
+
+        self.menus['project'].Append(10, 'New', "Create new mod!",kind=wx.ITEM_NORMAL)
+        self.menus['func'][10] = lambda: newMenu("ModInfo")
+        self.menus['project'].Append(11, 'Open', "Open a existing mod!")
+        self.menus['func'][11] = lambda: openFileMenu('Open')
+        self.menus['project'].Append(12, 'Quit\tCTRL+Q',kind=wx.ITEM_NORMAL)
+        self.menus['func'][12] = lambda: self.Close()
+
+        self.menus['about'].Append(13, 'Info', "Information about the modmaker!",kind=wx.ITEM_NORMAL)
+        self.menus['func'][13] = lambda: newMenu('Info')
+        self.menus['about'].Append(14, 'QA', "Information about question!",kind=wx.ITEM_NORMAL)
+        self.menus['func'][14] = lambda: newMenu('QA')
+
+        self.menubar.Append(self.menus['project'], 'Project')
+        self.menubar.Append(self.menus['about'], 'About')
+
+        for x in self.menus['project'].GetMenuItems():
+            self.Bind(wx.EVT_MENU, lambda evt: self.menus['func'][evt.GetId()](), x)
+
+        self.SetMenuBar(self.menubar)
+
+    def LoadUi(self):
+        self.pnl = wx.Panel(self)
+        self.pnl.SetSize(self.Size)
+        wx.StaticText(self.pnl, label ="Rusted warfare mod maker!",name="WelcomeMessage", size = wx.DefaultSize).SetFont(wx.Font(18,wx.DECORATIVE, wx.SLANT, wx.BOLD))
+        self.pnl.FindWindowByName("WelcomeMessage").SetForegroundColour(wx.Colour(199, 197, 195))
+        self.pnl.FindWindowByName("WelcomeMessage").Centre()
+        self.Bind(wx.EVT_SIZE, lambda _: {self.pnl.SetSize(self.Size), self.pnl.FindWindowByName("WelcomeMessage").Centre()})
+
+if __name__ == '__main__':
+    app = wx.App()
+    mainwin = mainWindow(None)
     
-    def initUI(self):
-        
-        self.projectName = QtWidgets.QLabel(self)
-        self.projectName.setText("Enter project name:")
-        self.projectName.textbox = QtWidgets.QLineEdit(self)
-        self.projectName.textbox.resize(150,20)
-        self.projectName.textbox.move(self.projectName.pos().x() + 150,self.projectName.pos().y() + 5)
-        self.projectLocation = QtWidgets.QLabel(self)
-        self.projectLocation.setText("Select project location(optinal):")
-        self.projectLocation.adjustSize()
-        self.projectLocation.move(self.projectName.pos().x(),self.projectName.pos().y() + 40)
-        self.projectLocation.textbox = QtWidgets.QLineEdit(self)
-        self.projectLocation.textbox.resize(150,20)
-        self.projectLocation.textbox.move(self.projectLocation.pos().x() + self.projectLocation.width() + 20,self.projectLocation.pos().y())
-        self.submit = QtWidgets.QPushButton(self)
-        self.submit.move(300,200)
-        self.submit.setText("Submit")
-        self.submit.clicked.connect(lambda: (print(self.projectLocation.textbox.text()), self.close()))
-
-def openFileNameDialog(self,name:str,boxtext:str = "",fileTypes:str = "All Files (*);;"):
-    options = QFileDialog.Options()
-    options |= QFileDialog.DontUseNativeDialog
-    fileName, filetype = QFileDialog.getOpenFileName(self,name, boxtext,fileTypes, options=options)
-    if fileName:
-        return fileName, filetype
-
-def openFileNamesDialog(self,name:str,boxtext:str = "",fileTypes:str = "All Files (*);;"):
-    options = QFileDialog.Options()
-    options |= QFileDialog.DontUseNativeDialog
-    files, filetype = QFileDialog.getOpenFileNames(self,name,boxtext,fileTypes, options=options)
-    if files:
-        return files, filetype
-    
-def saveFileDialog(self,name:str,boxtext:str = "",fileTypes:str = "All Files (*);;"):
-    options = QFileDialog.Options()
-    options |= QFileDialog.DontUseNativeDialog
-    fileName, filetype = QFileDialog.getSaveFileName(self,name,boxtext,fileTypes, options=options)
-    if fileName:
-        return fileName, filetype
-
-if __name__ == "__main__":
-    import sys
-    app = QApplication(sys.argv)
-    win = MainWindow()
-    sys.exit(app.exec_())
+    app.MainLoop()
+    print("Quit....")
